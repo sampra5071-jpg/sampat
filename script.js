@@ -5,11 +5,13 @@ const favoritesDiv = document.getElementById("favorites");
 const genreFilter = document.getElementById("genreFilter");
 const ratingFilter = document.getElementById("ratingFilter");
 const themeToggle = document.getElementById("themeToggle");
+
 const modal = document.getElementById("trailerModal");
 const trailerFrame = document.getElementById("trailerFrame");
 const closeModal = document.getElementById("closeModal");
 
-// 🌙 Theme persistence
+
+// 🌙 THEME PERSISTENCE
 if(localStorage.getItem("theme") === "light"){
     document.body.classList.add("light-mode");
 }
@@ -20,54 +22,97 @@ themeToggle.addEventListener("click",()=>{
         document.body.classList.contains("light-mode") ? "light":"dark");
 });
 
-// 🔥 Load Trending
+
+// 🔥 LOAD TRENDING + ALL ANIME
 async function loadTrending(){
-    const res = await fetch("https://api.jikan.moe/v4/top/anime?limit=8");
-    const data = await res.json();
-    displayCards(data.data, trending);
+    try{
+        const res = await fetch("https://api.jikan.moe/v4/top/anime?limit=20");
+        const data = await res.json();
+
+        // First 8 = Trending section
+        displayCards(data.data.slice(0,8), trending);
+
+        // Rest = Also show in results section
+        displayCards(data.data, result);
+
+    }catch{
+        trending.innerHTML = "Trending not available 😢";
+    }
 }
 loadTrending();
 
-// 🔎 Search
+
+// 🔎 SEARCH
 async function searchAnime(){
-    const query = input.value;
+    const query = input.value.trim();
     if(!query) return;
 
-    let url = `https://api.jikan.moe/v4/anime?q=${query}`;
+    result.innerHTML = "Loading...";
 
-    if(genreFilter.value) url += `&genres=${genreFilter.value}`;
-    if(ratingFilter.value) url += `&min_score=${ratingFilter.value}`;
+    try{
+        let url = `https://api.jikan.moe/v4/anime?q=${query}&limit=20`;
 
-    const res = await fetch(url);
-    const data = await res.json();
-    displayCards(data.data, result);
+        if(genreFilter.value) url += `&genres=${genreFilter.value}`;
+        if(ratingFilter.value) url += `&min_score=${ratingFilter.value}`;
 
-    saveSearchHistory(query);
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if(!data.data.length){
+            result.innerHTML = "No anime found 😢";
+            return;
+        }
+
+        displayCards(data.data, result);
+
+    }catch{
+        result.innerHTML = "Error fetching data 🚨";
+    }
 }
 
-// 🖼 Display Cards
+
+// 🖼 DISPLAY CARDS (SAFE VERSION)
 function displayCards(list, container){
-    container.innerHTML="";
-    list.forEach(anime=>{
+    container.innerHTML = "";
+
+    list.forEach(anime => {
+
         const card = document.createElement("div");
-        card.className="card";
-        card.innerHTML=`
-            <img src="${anime.images.jpg.image_url}">
+        card.className = "card";
+
+        card.innerHTML = `
+            <img src="${anime.images?.jpg?.image_url || ""}">
             <h4>${anime.title}</h4>
             <p>⭐ ${anime.score || "N/A"}</p>
-            <button onclick='addToFavorites(${JSON.stringify(anime)})'>❤️ Favorite</button>
-            <button onclick='watchTrailer("${anime.trailer.embed_url || ""}")'>🎥 Trailer</button>
+            <button class="fav-btn">❤️ Favorite</button>
+            <button class="trailer-btn">🎥 Trailer</button>
         `;
+
+        // ❤️ FAVORITE FIXED
+        card.querySelector(".fav-btn")
+            .addEventListener("click", () => addToFavorites(anime));
+
+        // 🎥 TRAILER FIXED
+        card.querySelector(".trailer-btn")
+            .addEventListener("click", () => watchTrailer(anime.trailer?.embed_url));
+
         container.appendChild(card);
     });
 }
 
-// ❤️ Favorites
+
+// ❤️ FAVORITES (FIXED PROPERLY)
 function addToFavorites(anime){
     let fav = JSON.parse(localStorage.getItem("favorites")) || [];
-    fav.push(anime);
-    localStorage.setItem("favorites",JSON.stringify(fav));
-    loadFavorites();
+
+    // Prevent duplicates
+    if(!fav.find(item => item.mal_id === anime.mal_id)){
+        fav.push(anime);
+        localStorage.setItem("favorites", JSON.stringify(fav));
+        loadFavorites();
+    }else{
+        alert("Already in favorites ❤️");
+    }
 }
 
 function loadFavorites(){
@@ -76,22 +121,29 @@ function loadFavorites(){
 }
 loadFavorites();
 
-// 🎥 Trailer
+
+// 🎥 TRAILER MODAL FIX
 function watchTrailer(url){
-    if(!url) return alert("No Trailer Available");
+    if(!url){
+        alert("No Trailer Available 🎬");
+        return;
+    }
+
     modal.classList.remove("hidden");
-    trailerFrame.src=url;
+    trailerFrame.src = url;
 }
 
-closeModal.onclick=()=>{
+// Close button
+closeModal.addEventListener("click", closeTrailer);
+
+// Close when clicking outside modal
+modal.addEventListener("click", (e)=>{
+    if(e.target === modal){
+        closeTrailer();
+    }
+});
+
+function closeTrailer(){
     modal.classList.add("hidden");
-    trailerFrame.src="";
-}
-
-// 🧠 Search History
-function saveSearchHistory(query){
-    let history = JSON.parse(localStorage.getItem("history")) || [];
-    history.unshift(query);
-    history = [...new Set(history)].slice(0,5);
-    localStorage.setItem("history",JSON.stringify(history));
+    trailerFrame.src = "";
 }
