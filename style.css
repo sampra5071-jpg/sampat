@@ -1,13 +1,8 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
-    background: #141e30;
+    background: linear-gradient(135deg,#141e30,#243b55);
     color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
     transition: 0.3s;
 }
 
@@ -17,32 +12,26 @@ body {
 }
 
 .container {
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-    background: rgba(0,0,0,0.6);
+    width: 95%;
+    max-width: 1200px;
+    margin: auto;
     padding: 20px;
-    border-radius: 10px;
+    text-align: center;
 }
 
-.light-mode .container {
-    background: white;
-}
-
-input {
-    width: 90%;
+input, select {
     padding: 10px;
-    margin: 10px 0;
-    border-radius: 5px;
+    margin: 5px;
+    border-radius: 6px;
     border: none;
 }
 
 button {
-    padding: 10px 20px;
-    border: none;
+    padding: 10px 15px;
     background: #ff4757;
+    border: none;
     color: white;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
 }
 
@@ -50,33 +39,44 @@ button:hover {
     background: #ff6b81;
 }
 
-#loader {
-    margin: 15px;
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+    gap: 15px;
+    margin-top: 20px;
 }
 
-.hidden {
-    display: none;
+.card {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
 }
 
-#suggestions {
-    background: white;
-    color: black;
-    position: absolute;
-    width: 80%;
-    max-width: 400px;
-    margin: auto;
+.card img {
+    width: 100%;
+    border-radius: 8px;
 }
 
-.suggestion-item {
-    padding: 5px;
-    cursor: pointer;
+.card button {
+    margin-top: 5px;
+    width: 100%;
 }
 
-.suggestion-item:hover {
-    background: #ddd;
+.modal {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.8);
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
-img {
-    width: 150px;
-    margin-top: 10px;
+.hidden { display:none; }
+
+.modal-content {
+    background:white;
+    padding:20px;
+    width:80%;
+    max-width:700px;
 }
