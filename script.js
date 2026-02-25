@@ -10,7 +10,6 @@ const modal = document.getElementById("trailerModal");
 const trailerFrame = document.getElementById("trailerFrame");
 const closeModal = document.getElementById("closeModal");
 
-
 // 🌙 THEME PERSISTENCE
 if(localStorage.getItem("theme") === "light"){
     document.body.classList.add("light-mode");
@@ -22,17 +21,16 @@ themeToggle.addEventListener("click",()=>{
         document.body.classList.contains("light-mode") ? "light":"dark");
 });
 
-
 // 🔥 LOAD TRENDING + ALL ANIME
 async function loadTrending(){
     try{
         const res = await fetch("https://api.jikan.moe/v4/top/anime?limit=20");
         const data = await res.json();
 
-        // First 8 = Trending section
+        // Trending top 8
         displayCards(data.data.slice(0,8), trending);
 
-        // Rest = Also show in results section
+        // All in results
         displayCards(data.data, result);
 
     }catch{
@@ -40,7 +38,6 @@ async function loadTrending(){
     }
 }
 loadTrending();
-
 
 // 🔎 SEARCH
 async function searchAnime(){
@@ -70,12 +67,15 @@ async function searchAnime(){
     }
 }
 
-
-// 🖼 DISPLAY CARDS (SAFE VERSION)
+// 🖼 DISPLAY CARDS WITH FAVORITE TOGGLE
 function displayCards(list, container){
     container.innerHTML = "";
 
+    const favList = JSON.parse(localStorage.getItem("favorites")) || [];
+
     list.forEach(anime => {
+
+        const isFav = favList.some(item => item.mal_id === anime.mal_id);
 
         const card = document.createElement("div");
         card.className = "card";
@@ -84,15 +84,17 @@ function displayCards(list, container){
             <img src="${anime.images?.jpg?.image_url || ""}">
             <h4>${anime.title}</h4>
             <p>⭐ ${anime.score || "N/A"}</p>
-            <button class="fav-btn">❤️ Favorite</button>
+            <button class="fav-btn ${isFav ? 'remove' : ''}">
+                ${isFav ? "❌ Unfavorite" : "❤️ Favorite"}
+            </button>
             <button class="trailer-btn">🎥 Trailer</button>
         `;
 
-        // ❤️ FAVORITE FIXED
+        // Toggle Favorite
         card.querySelector(".fav-btn")
-            .addEventListener("click", () => addToFavorites(anime));
+            .addEventListener("click", () => toggleFavorite(anime));
 
-        // 🎥 TRAILER FIXED
+        // Trailer
         card.querySelector(".trailer-btn")
             .addEventListener("click", () => watchTrailer(anime.trailer?.embed_url));
 
@@ -100,19 +102,22 @@ function displayCards(list, container){
     });
 }
 
-
-// ❤️ FAVORITES (FIXED PROPERLY)
-function addToFavorites(anime){
+// ❤️ FAVORITES TOGGLE
+function toggleFavorite(anime){
     let fav = JSON.parse(localStorage.getItem("favorites")) || [];
 
-    // Prevent duplicates
-    if(!fav.find(item => item.mal_id === anime.mal_id)){
+    const index = fav.findIndex(item => item.mal_id === anime.mal_id);
+
+    if(index === -1){
         fav.push(anime);
-        localStorage.setItem("favorites", JSON.stringify(fav));
-        loadFavorites();
     }else{
-        alert("Already in favorites ❤️");
+        fav.splice(index,1);
     }
+
+    localStorage.setItem("favorites", JSON.stringify(fav));
+
+    loadFavorites();
+    loadTrending(); // refresh displayed cards for button state
 }
 
 function loadFavorites(){
@@ -121,28 +126,23 @@ function loadFavorites(){
 }
 loadFavorites();
 
-
-// 🎥 TRAILER MODAL FIX
+// 🎥 TRAILER MODAL
 function watchTrailer(url){
     if(!url){
         alert("No Trailer Available 🎬");
         return;
     }
-
     modal.classList.remove("hidden");
     trailerFrame.src = url;
 }
 
-// Close button
+// Close trailer
 closeModal.addEventListener("click", closeTrailer);
-
-// Close when clicking outside modal
 modal.addEventListener("click", (e)=>{
     if(e.target === modal){
         closeTrailer();
     }
 });
-
 function closeTrailer(){
     modal.classList.add("hidden");
     trailerFrame.src = "";
