@@ -80,3 +80,14 @@ button:hover {
     width:80%;
     max-width:700px;
 }
+
+#closeModal {
+    float:right;
+    font-size:20px;
+    cursor:pointer;
+    color:black;
+}
+
+.fav-btn.remove {
+    background: #555;
+}
