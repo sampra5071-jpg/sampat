@@ -1,63 +1,97 @@
 const input = document.getElementById("animeInput");
-const suggestionsBox = document.getElementById("suggestions");
-const loader = document.getElementById("loader");
 const result = document.getElementById("result");
+const trending = document.getElementById("trending");
+const favoritesDiv = document.getElementById("favorites");
+const genreFilter = document.getElementById("genreFilter");
+const ratingFilter = document.getElementById("ratingFilter");
 const themeToggle = document.getElementById("themeToggle");
+const modal = document.getElementById("trailerModal");
+const trailerFrame = document.getElementById("trailerFrame");
+const closeModal = document.getElementById("closeModal");
 
-// 🌙 Theme Toggle
-themeToggle.addEventListener("click", () => {
+// 🌙 Theme persistence
+if(localStorage.getItem("theme") === "light"){
+    document.body.classList.add("light-mode");
+}
+
+themeToggle.addEventListener("click",()=>{
     document.body.classList.toggle("light-mode");
+    localStorage.setItem("theme",
+        document.body.classList.contains("light-mode") ? "light":"dark");
 });
 
-// 🔎 Auto Suggestions
-input.addEventListener("input", async () => {
+// 🔥 Load Trending
+async function loadTrending(){
+    const res = await fetch("https://api.jikan.moe/v4/top/anime?limit=8");
+    const data = await res.json();
+    displayCards(data.data, trending);
+}
+loadTrending();
+
+// 🔎 Search
+async function searchAnime(){
     const query = input.value;
-    if (query.length < 3) {
-        suggestionsBox.innerHTML = "";
-        return;
-    }
+    if(!query) return;
 
-    const response = await fetch(`https://api.jikan.moe/v4/anime?q=${query}&limit=5`);
-    const data = await response.json();
+    let url = `https://api.jikan.moe/v4/anime?q=${query}`;
 
-    suggestionsBox.innerHTML = "";
-    data.data.forEach(anime => {
-        const div = document.createElement("div");
-        div.classList.add("suggestion-item");
-        div.textContent = anime.title;
-        div.onclick = () => {
-            input.value = anime.title;
-            suggestionsBox.innerHTML = "";
-        };
-        suggestionsBox.appendChild(div);
-    });
-});
+    if(genreFilter.value) url += `&genres=${genreFilter.value}`;
+    if(ratingFilter.value) url += `&min_score=${ratingFilter.value}`;
 
-// 🎌 Search Anime
-async function searchAnime() {
-    const query = input.value;
-    if (!query) return;
+    const res = await fetch(url);
+    const data = await res.json();
+    displayCards(data.data, result);
 
-    loader.classList.remove("hidden");
-    result.innerHTML = "";
+    saveSearchHistory(query);
+}
 
-    try {
-        const response = await fetch(`https://api.jikan.moe/v4/anime?q=${query}&limit=1`);
-        const data = await response.json();
-        const anime = data.data[0];
-
-        loader.classList.add("hidden");
-
-        result.innerHTML = `
-            <h2>${anime.title}</h2>
-            <img src="${anime.images.jpg.image_url}" alt="poster">
-            <p><strong>Rating:</strong> ${anime.score}</p>
-            <p>${anime.synopsis}</p>
-            <p><strong>Suggested Platforms:</strong> Netflix, Crunchyroll</p>
+// 🖼 Display Cards
+function displayCards(list, container){
+    container.innerHTML="";
+    list.forEach(anime=>{
+        const card = document.createElement("div");
+        card.className="card";
+        card.innerHTML=`
+            <img src="${anime.images.jpg.image_url}">
+            <h4>${anime.title}</h4>
+            <p>⭐ ${anime.score || "N/A"}</p>
+            <button onclick='addToFavorites(${JSON.stringify(anime)})'>❤️ Favorite</button>
+            <button onclick='watchTrailer("${anime.trailer.embed_url || ""}")'>🎥 Trailer</button>
         `;
+        container.appendChild(card);
+    });
+}
 
-    } catch (error) {
-        loader.classList.add("hidden");
-        result.innerHTML = "Error fetching data 😢";
-    }
+// ❤️ Favorites
+function addToFavorites(anime){
+    let fav = JSON.parse(localStorage.getItem("favorites")) || [];
+    fav.push(anime);
+    localStorage.setItem("favorites",JSON.stringify(fav));
+    loadFavorites();
+}
+
+function loadFavorites(){
+    let fav = JSON.parse(localStorage.getItem("favorites")) || [];
+    displayCards(fav, favoritesDiv);
+}
+loadFavorites();
+
+// 🎥 Trailer
+function watchTrailer(url){
+    if(!url) return alert("No Trailer Available");
+    modal.classList.remove("hidden");
+    trailerFrame.src=url;
+}
+
+closeModal.onclick=()=>{
+    modal.classList.add("hidden");
+    trailerFrame.src="";
+}
+
+// 🧠 Search History
+function saveSearchHistory(query){
+    let history = JSON.parse(localStorage.getItem("history")) || [];
+    history.unshift(query);
+    history = [...new Set(history)].slice(0,5);
+    localStorage.setItem("history",JSON.stringify(history));
 }
