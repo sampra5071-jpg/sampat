@@ -6,11 +6,9 @@ const genreFilter = document.getElementById("genreFilter");
 const ratingFilter = document.getElementById("ratingFilter");
 const themeToggle = document.getElementById("themeToggle");
 
-const modal = document.getElementById("trailerModal");
 const trailerFrame = document.getElementById("trailerFrame");
-const closeModal = document.getElementById("closeModal");
 
-// 🌙 THEME PERSISTENCE
+// 🌙 THEME
 if(localStorage.getItem("theme") === "light"){
     document.body.classList.add("light-mode");
 }
@@ -21,16 +19,23 @@ themeToggle.addEventListener("click",()=>{
         document.body.classList.contains("light-mode") ? "light":"dark");
 });
 
-// 🔥 LOAD TRENDING + ALL ANIME
+// 🔥 LOADING SPINNER
+function showLoading(container){
+    container.innerHTML = `
+    <div class="text-center w-100">
+        <div class="spinner-border text-primary"></div>
+    </div>`;
+}
+
+// 🔥 LOAD TRENDING
 async function loadTrending(){
+    showLoading(trending);
+
     try{
         const res = await fetch("https://api.jikan.moe/v4/top/anime?limit=20");
         const data = await res.json();
 
-        // Trending top 8
         displayCards(data.data.slice(0,8), trending);
-
-        // All in results
         displayCards(data.data, result);
 
     }catch{
@@ -39,12 +44,19 @@ async function loadTrending(){
 }
 loadTrending();
 
-// 🔎 SEARCH
+// 🔎 SEARCH (WITH DEBOUNCE)
+let debounceTimer;
+
+input.addEventListener("input", ()=>{
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(searchAnime, 500);
+});
+
 async function searchAnime(){
     const query = input.value.trim();
     if(!query) return;
 
-    result.innerHTML = "Loading...";
+    showLoading(result);
 
     try{
         let url = `https://api.jikan.moe/v4/anime?q=${query}&limit=20`;
@@ -67,7 +79,7 @@ async function searchAnime(){
     }
 }
 
-// 🖼 DISPLAY CARDS WITH FAVORITE TOGGLE
+// 🖼 DISPLAY CARDS (BOOTSTRAP STYLE)
 function displayCards(list, container){
     container.innerHTML = "";
 
@@ -77,32 +89,39 @@ function displayCards(list, container){
 
         const isFav = favList.some(item => item.mal_id === anime.mal_id);
 
-        const card = document.createElement("div");
-        card.className = "card";
+        const col = document.createElement("div");
+        col.className = "col-md-3";
 
-        card.innerHTML = `
-            <img src="${anime.images?.jpg?.image_url || ""}">
-            <h4>${anime.title}</h4>
-            <p>⭐ ${anime.score || "N/A"}</p>
-            <button class="fav-btn ${isFav ? 'remove' : ''}">
-                ${isFav ? "❌ Unfavorite" : "❤️ Favorite"}
-            </button>
-            <button class="trailer-btn">🎥 Trailer</button>
-        `;
+        col.innerHTML = `
+        <div class="card h-100 shadow-sm">
+            <img src="${anime.images?.jpg?.image_url || ""}" class="card-img-top">
+            <div class="card-body">
+                <h6 class="card-title">${anime.title}</h6>
+                <p>⭐ ${anime.score || "N/A"}</p>
 
-        // Toggle Favorite
-        card.querySelector(".fav-btn")
+                <button class="btn btn-sm ${isFav ? 'btn-danger' : 'btn-outline-danger'} fav-btn">
+                    ${isFav ? "❌ Remove" : "❤️ Favorite"}
+                </button>
+
+                <button class="btn btn-sm btn-primary trailer-btn">
+                    🎥 Trailer
+                </button>
+            </div>
+        </div>`;
+
+        // Favorite toggle
+        col.querySelector(".fav-btn")
             .addEventListener("click", () => toggleFavorite(anime));
 
         // Trailer
-        card.querySelector(".trailer-btn")
+        col.querySelector(".trailer-btn")
             .addEventListener("click", () => watchTrailer(anime.trailer?.embed_url));
 
-        container.appendChild(card);
+        container.appendChild(col);
     });
 }
 
-// ❤️ FAVORITES TOGGLE
+// ❤️ FAVORITES
 function toggleFavorite(anime){
     let fav = JSON.parse(localStorage.getItem("favorites")) || [];
 
@@ -110,14 +129,16 @@ function toggleFavorite(anime){
 
     if(index === -1){
         fav.push(anime);
+        showToast("Added to Favorites ❤️");
     }else{
         fav.splice(index,1);
+        showToast("Removed from Favorites ❌");
     }
 
     localStorage.setItem("favorites", JSON.stringify(fav));
 
     loadFavorites();
-    loadTrending(); // refresh displayed cards for button state
+    loadTrending();
 }
 
 function loadFavorites(){
@@ -126,24 +147,29 @@ function loadFavorites(){
 }
 loadFavorites();
 
-// 🎥 TRAILER MODAL
+// 🎥 TRAILER (BOOTSTRAP MODAL)
 function watchTrailer(url){
     if(!url){
-        alert("No Trailer Available 🎬");
+        showToast("No Trailer Available 🎬");
         return;
     }
-    modal.classList.remove("hidden");
+
     trailerFrame.src = url;
+
+    let modal = new bootstrap.Modal(document.getElementById('trailerModal'));
+    modal.show();
 }
 
-// Close trailer
-closeModal.addEventListener("click", closeTrailer);
-modal.addEventListener("click", (e)=>{
-    if(e.target === modal){
-        closeTrailer();
-    }
-});
-function closeTrailer(){
-    modal.classList.add("hidden");
-    trailerFrame.src = "";
+// 🔔 TOAST (BETTER THAN ALERT)
+function showToast(msg){
+    const toast = document.createElement("div");
+    toast.className = "toast position-fixed bottom-0 end-0 m-3 show";
+    toast.innerHTML = `
+        <div class="toast-body bg-dark text-white">
+            ${msg}
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(()=> toast.remove(), 2000);
 }
