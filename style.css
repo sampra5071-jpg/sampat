@@ -1,93 +1,132 @@
+/* 🌍 GOOGLE FONT */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+/* 🌍 GLOBAL */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     background: linear-gradient(135deg,#141e30,#243b55);
     color: white;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* 🌞 LIGHT MODE */
+.light-mode {
+    background: #f5f7fa;
+    color: #222;
+}
+
+/* 📦 CONTAINER */
+.container {
+    max-width: 1200px;
+}
+
+/* 🔥 HEADINGS */
+h1, h3 {
+    font-weight: 700;
+}
+
+/* 🔍 INPUTS & SELECT */
+input, select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
     transition: 0.3s;
 }
 
-.light-mode {
-    background: #f5f5f5;
-    color: black;
+input:focus, select:focus {
+    box-shadow: 0 0 10px rgba(255,255,255,0.3);
 }
 
-.container {
-    width: 95%;
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
-    text-align: center;
-}
-
-input, select {
-    padding: 10px;
-    margin: 5px;
-    border-radius: 6px;
-    border: none;
-}
-
+/* 🔘 BUTTONS */
 button {
-    padding: 10px 15px;
-    background: #ff4757;
-    border: none;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
+    border-radius: 8px !important;
+    transition: all 0.3s ease;
 }
 
 button:hover {
-    background: #ff6b81;
+    transform: scale(1.05);
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
+/* 🧊 CARD (GLASS EFFECT) */
 .card {
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    border-radius: 10px;
+    background: rgba(255,255,255,0.1) !important;
+    backdrop-filter: blur(10px);
+    border-radius: 15px !important;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: none;
 }
 
+/* 🧊 CARD HOVER EFFECT */
+.card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.7);
+}
+
+/* 🖼 IMAGE */
 .card img {
     width: 100%;
-    border-radius: 8px;
+    height: 250px;
+    object-fit: cover;
 }
 
-.card button {
+/* 📄 CARD BODY */
+.card-body {
+    text-align: left;
+}
+
+/* ❤️ FAVORITE BUTTON */
+.fav-btn {
     margin-top: 5px;
-    width: 100%;
-}
-
-.modal {
-    position: fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    background: rgba(0,0,0,0.8);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.hidden { display:none; }
-
-.modal-content {
-    background:white;
-    padding:20px;
-    width:80%;
-    max-width:700px;
-}
-
-#closeModal {
-    float:right;
-    font-size:20px;
-    cursor:pointer;
-    color:black;
 }
 
 .fav-btn.remove {
-    background: #555;
+    background: #555 !important;
+}
+
+/* 🎥 TRAILER BUTTON */
+.trailer-btn {
+    margin-top: 5px;
+}
+
+/* 🌙 THEME BUTTON */
+#themeToggle {
+    font-size: 14px;
+}
+
+/* 🔄 LOADING SPINNER */
+.spinner-border {
+    margin-top: 20px;
+}
+
+/* 🎥 MODAL FIX */
+.modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* 🔔 TOAST */
+.toast {
+    border-radius: 10px;
+    opacity: 0.95;
+}
+
+/* 📱 MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+    .card img {
+        height: 200px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+}
+
+/* ✨ FADE IN ANIMATION */
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
 }
